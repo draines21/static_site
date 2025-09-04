@@ -1,6 +1,8 @@
 import unittest
-from inline_markdown import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link
+from inline_markdown import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes
 from textnode import TextNode, TextType
+from markdown_blocks import markdown_to_blocks
+
 
 class TestInlineMarkdown(unittest.TestCase):
     def test_split_unbalanced_raises(self):
@@ -96,6 +98,84 @@ class TestInlineMarkdown(unittest.TestCase):
         ],
         new_nodes,
     )
+
+
+
+
+    def test_text_to_textnode_plain(self):
+        result = text_to_textnodes("hello world") 
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].text, "hello world")
+        self.assertEqual(result[0].text_type, TextType.TEXT)
+    
+    def test_to_textnodes_code(self):
+        result = text_to_textnodes("`code`")
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].text, "code")
+        self.assertEqual(result[0].text_type, TextType.CODE)
+
+    def test_to_textnodes_link(self):
+        result = text_to_textnodes("a [link](https://boot.dev)")
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0].text, "a ")
+        self.assertEqual(result[0].text_type, TextType.TEXT)
+        self.assertEqual(result[1].text, "link")
+        self.assertEqual(result[1].text_type, TextType.LINK)
+        self.assertEqual(result[1].url, "https://boot.dev")
+
+    def test_text_to_textnodes_image(self):
+        result = text_to_textnodes("before ![alt](u) after"
+                                   )
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0].text, "before ")
+        self.assertEqual(result[0].text_type, TextType.TEXT)
+        self.assertEqual(result[1].text, "alt")
+        self.assertEqual(result[1].text_type, TextType.IMAGE)
+        self.assertEqual(result[1].url, "u")
+        self.assertEqual(result[2].text, " after")
+        self.assertEqual(result[2].text_type, TextType.TEXT)
+
+
+    def test_markdown_to_blocks(self):
+        md = """
+This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+            ],
+        )
+
+    def test_whitespace_only(self):
+        self.assertEqual(markdown_to_blocks(" \n \n "), [])
+
+    def test_preserve_internal_newlines(self):
+        md = "Line 1\nLine 2\n\nNext block"
+        self.assertEqual(
+            markdown_to_blocks(md),
+            ["Line 1\nLine 2", "Next block"],
+        )
+
+    def test_single_block(self):
+        md = "Only one block here"
+        self.assertEqual(markdown_to_blocks(md), ["Only one block here"])
+
+
+    def test_blocks_with_extra_blank_lines(self):
+        md = "\n\nPara 1 \n\n\n\nPara 2\n\n"
+        self.assertEqual(markdown_to_blocks(md),["Para 1", "Para 2"],)
+
+    
 
 
 

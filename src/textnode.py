@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, auto
 from htmlnode import LeafNode
 
 class TextType(Enum):
@@ -43,3 +43,6 @@ def text_node_to_html_node(text_node):
         return LeafNode("img", "", {"src": text_node.url, "alt":text_node.text})
     else:
         raise Exception("unsupported text type")
+    
+
+
