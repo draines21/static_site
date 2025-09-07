@@ -153,3 +153,17 @@ def text_to_children(text):
     return [text_node_to_html_node(n) for n in nodes]
 
 
+def extract_title(markdown):
+    lines = markdown.splitlines()
+
+    for line in lines:
+        if line.startswith("# ") and not line.startswith("##"):
+            title = line[2:].strip()
+            if title == "":
+                raise Exception("no h1 header")
+            return title
+    raise Exception("no h1 header")
+
+
+
+
